@@ -1,21 +1,14 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: 001101
- * Date: 25.01.2017
- * Time: 01:21
- */
 return array (
-
-    'ID' => 'ID',
-    'Type' => 'Typ',
-    'Title' => 'Titel',
-    'Icon' => 'Symbol',
-    'Style Class' => 'Style Klasse',
-    'Content' => 'Inhalt',
-    'Template Layout' => 'Vorlagen Layout',
-    'Sort Order' => 'Sortierung',
-    'Target Url' => 'Ziel URL',
-    'Only visible for admins' => 'Nur für Admins sichtbar',
-    'Without adding to navigation (Direct link)' => 'Ohne zur Navigation hinzufügen (Direktlink)',
+  'Content' => 'Inhalt',
+  'ID' => 'ID',
+  'Icon' => 'Symbol',
+  'Invalid template selection!' => 'Ungültige Vorlagenauswahl!',
+  'Invalid view file selection!' => 'Ungültige View-Dateiauswahl!',
+  'Sort Order' => 'Sortierung',
+  'Style Class' => 'Style Klasse',
+  'Target Url' => 'Ziel URL',
+  'Template Layout' => 'Vorlagen Layout',
+  'Title' => 'Titel',
+  'Type' => 'Typ',
 );

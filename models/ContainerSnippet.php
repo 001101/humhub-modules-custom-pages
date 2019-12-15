@@ -3,7 +3,7 @@
 namespace humhub\modules\custom_pages\models;
 
 use Yii;
-use humhub\modules\custom_pages\components\Container;
+use humhub\modules\custom_pages\models\forms\SettingsForm;
 use humhub\modules\custom_pages\modules\template\models\Template;
 
 /**
@@ -21,8 +21,10 @@ use humhub\modules\custom_pages\modules\template\models\Template;
  * @property integer $admin_only
  * @property string $cssClass
  */
-class ContainerSnippet extends ContainerPage
+class ContainerSnippet extends Snippet
 {
+
+    const SIDEEBAR_STREAM = 'SpaceStreamSidebar';
 
     /**
      * @return string the associated database table name
@@ -32,42 +34,10 @@ class ContainerSnippet extends ContainerPage
         return 'custom_pages_container_snippet';
     }
 
-    /**
-     * @inheritdoc
-     * @return string
-     */
-    public function rules()
-    {
-        $rules = $this->defaultRules();
-        $rules[] = ['page_content', 'safe'];
-        return $rules;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getContentName()
-    {
-        return 'Snippet';
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getUrl()
-    {
-        return $this->content->container->createUrl('/custom_pages/container-snippet/view', ['id' => $this->id]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function getContentTypes()
+    public static function getDefaultTargets()
     {
         return [
-            Container::TYPE_MARKDOWN,
-            Container::TYPE_IFRAME,
-            Container::TYPE_TEMPLATE,
+            ['id' => self::SIDEEBAR_STREAM , 'name' => Yii::t('CustomPagesModule.base', 'Stream'), 'accessRoute' => '/space/space/home']
         ];
     }
 
@@ -87,4 +57,11 @@ class ContainerSnippet extends ContainerPage
         return Template::getSelection(['type' => Template::TYPE_SNIPPED_LAYOUT, 'allow_for_spaces' => 1]);
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getPhpViewPath()
+    {
+        return (new SettingsForm())->phpContainerSnippetPath;
+    }
 }

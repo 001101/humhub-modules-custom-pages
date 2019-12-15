@@ -8,6 +8,7 @@
 
 namespace humhub\modules\custom_pages\modules\template\controllers;
 
+use humhub\modules\custom_pages\modules\template\models\TemplateSearch;
 use Yii;
 use humhub\modules\custom_pages\modules\template\models\Template;
 use humhub\modules\custom_pages\modules\template\models\forms\AddElementForm;
@@ -25,7 +26,7 @@ use humhub\modules\custom_pages\modules\template\components\TemplateCache;
  *
  * This controller is designed to support different template types by setting the $type
  * and $indexHelp attributes.
- * 
+ *
  * @author buddha
  */
 class AdminController extends \humhub\modules\admin\components\Controller
@@ -33,38 +34,38 @@ class AdminController extends \humhub\modules\admin\components\Controller
 
     /**
      * Defines the template type this controller should manage.
-     * 
-     * @var type 
+     *
+     * @var type
      */
     public $type;
-    
+
     /**
      * Defines the index help text for the given template type.
-     * @var type 
+     * @var type
      */
     public $indexHelp;
 
     /**
      * Returns a searchable gridview with all avialable templates of the given type.
-     * 
+     *
      * @return type
      */
     public function actionIndex()
     {
-        $searchModel = new \humhub\modules\custom_pages\modules\template\models\TemplateSearch(['type' => $this->type]);
+        $searchModel = new TemplateSearch(['type' => $this->type]);
         $dataProvider = $searchModel->search(Yii::$app->request->queryParams);
 
         return $this->render('@custom_pages/modules/template/views/admin/index', [
-                    'helpText' => $this->indexHelp,
-                    'type' => $this->type,
-                    'dataProvider' => $dataProvider,
-                    'searchModel' => $searchModel
+            'helpText' => $this->indexHelp,
+            'type' => $this->type,
+            'dataProvider' => $dataProvider,
+            'searchModel' => $searchModel
         ]);
     }
 
     /**
      * Action used for creating and editing Template instances.
-     * 
+     *
      * @return string result view
      */
     public function actionEdit($id = null)
@@ -76,7 +77,7 @@ class AdminController extends \humhub\modules\admin\components\Controller
         }
 
         $model->scenario = 'edit';
-        
+
         // If the form was submitted try to save/validate and flush the template cache
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             TemplateCache::flushByTemplateId($model->id);
@@ -89,7 +90,7 @@ class AdminController extends \humhub\modules\admin\components\Controller
 
     /**
      * Used to edit the source of a template.
-     * 
+     *
      * @return type
      * @throws \yii\web\HttpException
      */
@@ -111,11 +112,11 @@ class AdminController extends \humhub\modules\admin\components\Controller
         }
 
         return $this->render('@custom_pages/modules/template/views/admin/editSource', [
-                    'model' => $model,
-                    'contentTypes' => $this->getContentTypes()
+            'model' => $model,
+            'contentTypes' => $this->getContentTypes()
         ]);
     }
-    
+
     /**
      * Returns a selection of all available template content types.
      * @return type
@@ -125,36 +126,36 @@ class AdminController extends \humhub\modules\admin\components\Controller
         return [
             \humhub\modules\custom_pages\modules\template\models\TextContent::$label => \humhub\modules\custom_pages\modules\template\models\TextContent::className(),
             \humhub\modules\custom_pages\modules\template\models\RichtextContent::$label => \humhub\modules\custom_pages\modules\template\models\RichtextContent::className(),
+            \humhub\modules\custom_pages\modules\template\models\HumHubRichtextContent::$label => \humhub\modules\custom_pages\modules\template\models\HumHubRichtextContent::className(),
             \humhub\modules\custom_pages\modules\template\models\ImageContent::$label => \humhub\modules\custom_pages\modules\template\models\ImageContent::className(),
-            \humhub\modules\custom_pages\modules\template\models\ContainerContent::$label => \humhub\modules\custom_pages\modules\template\models\ContainerContent::className(),
             \humhub\modules\custom_pages\modules\template\models\FileContent::$label => \humhub\modules\custom_pages\modules\template\models\FileContent::className(),
+            \humhub\modules\custom_pages\modules\template\models\FileDownloadContent::$label => \humhub\modules\custom_pages\modules\template\models\FileDownloadContent::className(),
+            \humhub\modules\custom_pages\modules\template\models\ContainerContent::$label => \humhub\modules\custom_pages\modules\template\models\ContainerContent::className(),
         ];
     }
 
     /**
      * Used to add elements to a template.
-     * 
+     *
      * @return type
      * @throws \yii\web\HttpException
      */
-    public function actionAddElement($template_id, $content_type)
+    public function actionAddElement($templateId, $type)
     {
-        Yii::$app->response->format = 'json';
-
         $form = new AddElementForm();
-        $form->setElementDefinition($template_id, $content_type);
+        $form->setElementDefinition($templateId, $type);
         $form->setScenario('create');
 
         // If the form was submitted try to save/validate and flush the template cache
         if ($form->load(Yii::$app->request->post()) && $form->save()) {
-            TemplateCache::flushByTemplateId($template_id);
-            return $this->getJsonEditElementResult(true, TemplateElementAdminRow::widget(['form' => $form, 'saved' => true]), $form);
+            TemplateCache::flushByTemplateId($templateId);
+            return $this->getJsonEditElementResult(true, TemplateElementAdminRow::widget(['form' => $form]), $form);
         }
 
         $result = EditElementModal::widget([
-                    'model' => $form,
-                    'isAdminEdit' => true,
-                    'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Add</strong> new {type} element', ['type' => $form->getLabel()])
+            'model' => $form,
+            'isAdminEdit' => true,
+            'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Add</strong> new {type} element', ['type' => $form->getLabel()])
         ]);
 
         return $this->getJsonEditElementResult(false, $result, $form);
@@ -162,20 +163,16 @@ class AdminController extends \humhub\modules\admin\components\Controller
 
     /**
      * Used to edit the element of a template.
-     * 
+     *
      * This controller expects an id request parameter.
-     * 
+     *
      * @return type
      * @throws \yii\web\HttpException if no template id was given.
      */
     public function actionEditElement($id)
     {
-        $elementId = $id;
-
-        Yii::$app->response->format = 'json';
-
         $form = new EditElementForm();
-        $form->setElementId($elementId);
+        $form->setElementId($id);
         $form->setScenario('edit-admin');
 
         if ($form->load(Yii::$app->request->post()) && $form->save()) {
@@ -184,10 +181,10 @@ class AdminController extends \humhub\modules\admin\components\Controller
         }
 
         $result = EditElementModal::widget([
-                    'model' => $form,
-                    'isAdminEdit' => true,
-                    'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Edit</strong> element {name}', ['name' => $form->element->name]),
-                    'resetUrl' => \yii\helpers\Url::to(['reset-element', 'id' => $elementId])
+            'model' => $form,
+            'isAdminEdit' => true,
+            'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Edit</strong> element {name}', ['name' => $form->element->name]),
+            'resetUrl' => \yii\helpers\Url::to(['reset-element', 'id' => $id])
         ]);
 
         return $this->getJsonEditElementResult(false, $result, $form);
@@ -202,8 +199,6 @@ class AdminController extends \humhub\modules\admin\components\Controller
     {
         $this->forcePostRequest();
 
-        Yii::$app->response->format = 'json';
-
         $element = TemplateElement::findOne(['id' => $id]);
         $ownerContent = $element->getDefaultContent();
 
@@ -211,18 +206,16 @@ class AdminController extends \humhub\modules\admin\components\Controller
             $ownerContent->delete();
         }
 
-        Yii::$app->getSession()->setFlash('data-saved', Yii::t('CustomPagesModule.base', 'Saved'));
-
-        return [
+        return $this->asJson([
             'success' => true,
             'id' => $id,
-            'content' => \humhub\widgets\DataSaved::widget(),
-        ];
+            'output' => TemplateElementAdminRow::widget(['model' => $element, 'saved' => true])
+        ]);
     }
 
     /**
      * This action will render a preview of a given template.
-     * 
+     *
      * @param type $id
      * @param type $editView
      * @param type $reload
@@ -237,20 +230,20 @@ class AdminController extends \humhub\modules\admin\components\Controller
 
         if ($reload != null) {
             return $this->renderPartial('@custom_pages/modules/template/views/admin/preview', [
-                        'template' => $template,
-                        'editView' => $editView
+                'template' => $template,
+                'editView' => $editView
             ]);
         } else {
             return $this->render('@custom_pages/modules/template/views/admin/preview', [
-                        'template' => $template,
-                        'editView' => $editView
+                'template' => $template,
+                'editView' => $editView
             ]);
         }
     }
 
     /**
      * Creates a json result array used by multiple actions.
-     * 
+     *
      * @param boolean $success defines if the process was successfull e.g. saving an element
      * @param mixed $content content result
      * @param mixed $form Form model
@@ -258,17 +251,17 @@ class AdminController extends \humhub\modules\admin\components\Controller
      */
     private function getJsonEditElementResult($success, $content, $form)
     {
-        $json = [];
-        $json['success'] = $success;
-        $json['content'] = $content;
-        $json['name'] = $form->element->name;
-        $json['id'] = $form->element->id;
-        return $json;
+        return $this->asJson([
+            'success' => $success,
+            'output' => $content,
+            'name' => $form->element->name,
+            'id' => $form->element->id
+        ]);
     }
 
     /**
      * Will delete a given template model instance.
-     * 
+     *
      * @return type
      */
     public function actionDeleteTemplate($id)
@@ -276,7 +269,7 @@ class AdminController extends \humhub\modules\admin\components\Controller
         $template = Template::findOne(['id' => $id]);
 
         if (!$template->delete()) {
-            Yii::$app->session->setFlash('error', Yii::t('CustomPagesModule.modules_template_controllers_AdminController', 'The template could not be deleted, please get sure that this template is not in use.'));
+            $this->view->error(Yii::t('CustomPagesModule.modules_template_controllers_AdminController', 'The template could not be deleted, please get sure that this template is not in use.'));
         }
 
         return $this->redirect(['index']);
@@ -284,65 +277,50 @@ class AdminController extends \humhub\modules\admin\components\Controller
 
     /**
      * Will delete an template element model instance.
-     * 
+     *
      * This action requres a confirmation.
-     * 
+     *
      * @return type
      * @throws \yii\web\HttpException
      */
     public function actionDeleteElement($id)
     {
-        Yii::$app->response->format = 'json';
+        $element = TemplateElement::findOne(['id' => $id]);
+        TemplateCache::flushByTemplateId($element->template_id);
+        $element->delete();
 
-        if (Yii::$app->request->post('confirmation')) {
-            $element = TemplateElement::findOne(['id' => $id]);
-            TemplateCache::flushByTemplateId($element->template_id);
-            $element->delete();
-
-            return [
-                'success' => true,
-                'id' => $id
-            ];
-        }
-
-        return [
+        $this->asJson([
             'success' => true,
-            'content' => \humhub\modules\custom_pages\modules\template\widgets\ConfirmDeletionModal::widget([
-                'title' => Yii::t('CustomPagesModule.modules_template_controller_OwnerContentController', '<strong>Confirm</strong> element deletion'),
-                'message' => Yii::t('CustomPagesModule.modules_template_widgets_views_confirmDeletionModal', 'Do you really want to delete this element? <br />The deletion will affect all pages using this template.'),
-            ])
-        ];
+            'id' => $id
+        ]);
     }
 
     /**
      * This action is used to edit multiple elements.
-     * 
+     *
      * @return type
      * @throws \yii\web\HttpException
      */
     public function actionEditMultiple($id)
     {
-        Yii::$app->response->format = 'json';
-        $templateId = $id;
-
         $form = new EditMultipleElementsForm(['scenario' => 'edit-admin']);
-        $form->setOwnerTemplateId($templateId);
+        $form->setOwnerTemplateId($id);
 
         if (Yii::$app->request->post() && $form->load(Yii::$app->request->post()) && $form->save()) {
-            TemplateCache::flushByTemplateId($templateId);
-            return [
+            TemplateCache::flushByTemplateId($id);
+            return $this->asJson([
                 'success' => true,
-                'content' => TemplateContentTable::widget(['template' => $form->template, 'saved' => true])
-            ];
+                'output' => TemplateContentTable::widget(['template' => $form->template, 'saved' => true])
+            ]);
         }
 
-        return [
+        $this->asJson([
             'success' => false,
-            'content' => EditMultipleElementsModal::widget([
+            'output' => EditMultipleElementsModal::widget([
                 'model' => $form,
-                'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Edit</strong> default content of {templateName}', ['templateName' => $form->template->name])
+                'title' => Yii::t('CustomPagesModule.modules_template_controllers_AdminController', '<strong>Edit</strong> {templateName}', ['templateName' => $form->template->name])
             ])
-        ];
+        ]);
     }
 
     /**

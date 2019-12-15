@@ -1,11 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: 001101
- * Date: 25.01.2017
- * Time: 02:18
- */
-
 return array (
-    'Invalid request data!' => 'Ungültige Anfrage Daten!',
+  '<strong>Edit</strong> {type} element' => '{type} Element<strong>bearbeiten</strong> ',
+  'Access denied!' => 'Zugang verweigert!',
+  'Empty content elements cannot be delted!' => 'Leere Inhaltselemente können nicht gelöscht werden!',
+  'Invalid request data!' => 'Ungültige Anfrage Daten!',
+  'You are not allowed to delete default content!' => 'Du darfst keine Standardinhalte löschen!',
 );

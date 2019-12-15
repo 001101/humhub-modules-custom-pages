@@ -3,8 +3,8 @@
 namespace humhub\modules\custom_pages\models;
 
 use Yii;
-use humhub\components\ActiveRecord;
-use humhub\modules\custom_pages\components\Container;
+use humhub\modules\custom_pages\helpers\Url;
+use humhub\modules\custom_pages\models\forms\SettingsForm;
 use humhub\modules\custom_pages\modules\template\models\Template;
 
 /**
@@ -22,21 +22,11 @@ use humhub\modules\custom_pages\modules\template\models\Template;
  * @property integer $admin_only
  * @property string $cssClass
  */
-class Snippet extends ActiveRecord implements CustomContentContainer
+class Snippet extends CustomContentContainer
 {
 
     const SIDEBAR_DASHBOARD = 'Dasboard';
     const SIDEBAR_DIRECTORY = 'Directory';
-
-    /**
-     * @inhritdoc
-     */
-    public function behaviors()
-    {
-        return [
-            ['class' => Container::className()],
-        ];
-    }
 
     /**
      * @return string the associated database table name
@@ -52,10 +42,7 @@ class Snippet extends ActiveRecord implements CustomContentContainer
      */
     public function rules()
     {
-        $rules = $this->defaultRules();
-        $rules[] = ['content', 'safe'];
-        $rules[] = ['sidebar', 'required'];
-        return $rules;
+        return $this->defaultRules();
     }
 
     /**
@@ -65,8 +52,8 @@ class Snippet extends ActiveRecord implements CustomContentContainer
     public function attributeLabels()
     {
         $result = $this->defaultAttributeLabels();
-        $result['content'] = Yii::t('CustomPagesModule.models_Snippet', 'Content');
-        $result['sidebar'] = Yii::t('CustomPagesModule.models_Snippet', 'Sidebar');
+        $result['page_content'] = Yii::t('CustomPagesModule.models_Snippet', 'Content');
+        $result['target'] = Yii::t('CustomPagesModule.models_Snippet', 'Sidebar');
         return $result;
     }
 
@@ -74,11 +61,11 @@ class Snippet extends ActiveRecord implements CustomContentContainer
      * Returns a sidebar selection for all sidebars this page can be added.
      * @return array
      */
-    public static function getSidebarSelection()
+    public static function getDefaultTargets()
     {
         return [
-            self::SIDEBAR_DASHBOARD => Yii::t('CustomPagesModule.base', 'Dashboard'),
-            self::SIDEBAR_DIRECTORY => Yii::t('CustomPagesModule.base', 'Directory'),
+            ['id' => static::SIDEBAR_DASHBOARD, 'name' => Yii::t('CustomPagesModule.base', 'Dashboard'), 'accessRoute' => '/dashboard'],
+            ['id' => static::SIDEBAR_DIRECTORY, 'name' => Yii::t('CustomPagesModule.base', 'Directory'), 'accessRoute' => '/directory/directory']
         ];
     }
 
@@ -88,9 +75,10 @@ class Snippet extends ActiveRecord implements CustomContentContainer
     public function getContentTypes()
     {
         return [
-            Container::TYPE_MARKDOWN,
-            Container::TYPE_IFRAME,
-            Container::TYPE_TEMPLATE,
+            MarkdownType::ID,
+            IframeType::ID,
+            TemplateType::ID,
+            PhpType::ID,
         ];
     }
 
@@ -115,7 +103,31 @@ class Snippet extends ActiveRecord implements CustomContentContainer
      */
     public function getPageContent()
     {
-        return $this->content;
+        return $this->page_content;
     }
 
+    /**
+     * @inheritdoc
+     */
+    public function getPhpViewPath()
+    {
+        $settings = new SettingsForm();
+        return $settings->phpGlobalSnippetPath;
+    }
+
+    /**
+     * @return string
+     */
+    public function getEditUrl()
+    {
+        return Url::toEditSnippet($this->id, $this->content->container);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPageType()
+    {
+       return PageType::Snippet;
+    }
 }

@@ -34,12 +34,6 @@ class TemplateElementForm extends \yii\base\Model
      * @var \humhub\modules\custom_pages\modules\template\models\TemplateContentActiveRecord 
      */
     public $content;
-
-    /**
-     * New content files.
-     * @var type 
-     */
-    public $fileList;
     
     /**
      * OwnerContent use_default flag
@@ -83,16 +77,16 @@ class TemplateElementForm extends \yii\base\Model
     public function load($data, $formName = null)
     {
         parent::load($data);
-        
-        $this->fileList = (isset($data['fileList'])) ? $data['fileList'] : [];
 
         $result = false;
         if ($this->content != null) {
             $result = $result || $this->content->load($data, $formName);
         }
 
+        $elementLoaded = $this->element->load($data, $formName);
+
         // Note, only the template element loading is mandatory.
-        return $result || $this->element->load($data, $formName);
+        return $result || $elementLoaded;
     }
 
     public function validate($attributeNames = NULL, $clearErrors = true)
@@ -104,14 +98,4 @@ class TemplateElementForm extends \yii\base\Model
     {
         return Yii::createObject($this->element->content_type)->getLabel();
     }
-
-    public function saveFiles()
-    {
-        if ($this->fileList == null || $this->content == null || $this->content->isNewRecord) {
-            return;
-        }
-
-        \humhub\modules\file\models\File::attachPrecreated($this->content, implode(',', $this->fileList));
-    }
-
 }

@@ -48,12 +48,13 @@ class EditElementForm extends TemplateElementForm
     public function save()
     {
         if($this->validate()) {
+            $this->element->save();
+            
             // Try saving the default content if
             if($this->content->save()) {
                 $this->defaultOwnerContent->setContent($this->content);
                 $this->defaultOwnerContent->use_default = $this->use_default;
                 $this->defaultOwnerContent->save();
-                $this->saveFiles();
             }
             return true;
         } 

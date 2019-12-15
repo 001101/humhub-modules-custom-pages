@@ -2,20 +2,49 @@
 
 namespace humhub\modules\custom_pages;
 
+use humhub\modules\content\models\Content;
 use Yii;
-use yii\helpers\Url;
+use humhub\modules\custom_pages\models\Snippet;
+use humhub\modules\custom_pages\helpers\Url;
 use humhub\modules\custom_pages\models\Page;
 use humhub\modules\custom_pages\models\ContainerPage;
 use humhub\modules\space\models\Space;
 use humhub\modules\content\components\ContentContainerActiveRecord;
+use yii\base\Exception;
 
 class Module extends \humhub\modules\content\components\ContentContainerModule
 {
+    const ICON = 'fa-file-text-o';
+    const SETTING_MIGRATION_KEY = 'global_pages_migrated_visibility';
 
+    public $resourcesPath = 'resources';
+    
     public function init()
     {
         self::loadTwig();
         parent::init();
+    }
+
+    public function checkOldGlobalContent()
+    {
+
+        if(!Yii::$app->user->isAdmin()) {
+            return;
+        }
+
+        if(!$this->settings->get(static::SETTING_MIGRATION_KEY, 0)) {
+            foreach (Page::find()->all() as $page) {
+                $page->content->visibility = $page->admin_only ? Content::VISIBILITY_PRIVATE : Content::VISIBILITY_PUBLIC;
+                $page->content->save();
+            }
+
+            foreach (Snippet::find()->all() as $snippet) {
+                $snippet->content->visibility = $snippet->admin_only ? Content::VISIBILITY_PRIVATE : Content::VISIBILITY_PUBLIC;
+                $snippet->content->save();
+            }
+
+            $this->settings->set(static::SETTING_MIGRATION_KEY, 1);
+        }
     }
 
     /**
@@ -23,7 +52,7 @@ class Module extends \humhub\modules\content\components\ContentContainerModule
      */
     public function getConfigUrl()
     {
-        return Url::to(['/custom_pages/admin']);
+        return Url::toModuleConfig();
     }
 
     /**
@@ -56,7 +85,7 @@ class Module extends \humhub\modules\content\components\ContentContainerModule
     public function getContentContainerTypes()
     {
         return [
-            Space::className(),
+            Space::class,
         ];
     }
 
